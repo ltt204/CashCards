@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,20 +26,21 @@ public class CashCardController {
 
 
     @GetMapping("/{cashCardId}")
-    private ResponseEntity<CashCard> getCashCardById(@PathVariable long cashCardId) {
-        Optional<CashCard> cashCardOptional = _cashCardRepository.findById(cashCardId);
+    private ResponseEntity<CashCard> getCashCardById(@PathVariable long cashCardId, Principal principal) {
+        Optional<CashCard> cashCardOptional = Optional.ofNullable(_cashCardRepository.findByIdAndOwner(cashCardId, principal.getName()));
 
         return cashCardOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    private ResponseEntity<List<CashCard>> getCashCards(Pageable pageable) {
-        Page<CashCard> page = _cashCardRepository.findAll(
+    private ResponseEntity<List<CashCard>> getCashCards(Pageable pageable, Principal principal) {
+        Page<CashCard> page = _cashCardRepository.findByOwner(
                 PageRequest.of(
                         pageable.getPageNumber(),
                         pageable.getPageSize(),
                         pageable.getSortOr(Sort.by(Sort.Direction.ASC, "amount"))
-                )
+                ),
+                principal.getName()
         );
 
         return ResponseEntity.ok(page.getContent());
@@ -53,8 +55,8 @@ public class CashCardController {
      * Thanks, Spring Web!
      **/
     @PostMapping
-    private ResponseEntity<?> createCashCard(@RequestBody CashCardCreateRequestDto createRequestDto, UriComponentsBuilder ucb) {
-        var newCashCard = _cashCardRepository.save(new CashCard(null, createRequestDto.amount()));
+    private ResponseEntity<?> createCashCard(@RequestBody CashCardCreateRequestDto createRequestDto, UriComponentsBuilder ucb, Principal principal) {
+        var newCashCard = _cashCardRepository.save(new CashCard(null, createRequestDto.amount(), principal.getName()));
 
 //        return ResponseEntity.created(URI.create("/cashcards/" + newCashCard.id())).build();
         var locationOfNewCard = ucb
