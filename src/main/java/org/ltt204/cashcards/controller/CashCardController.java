@@ -1,6 +1,6 @@
 package org.ltt204.cashcards.controller;
 
-import org.ltt204.cashcards.dto.CashCardCreateRequestDto;
+import org.ltt204.cashcards.dto.CashCardModifyRequestDto;
 import org.ltt204.cashcards.model.CashCard;
 import org.ltt204.cashcards.repository.CashCardRepository;
 import org.springframework.data.domain.Page;
@@ -27,9 +27,12 @@ public class CashCardController {
 
     @GetMapping("/{cashCardId}")
     private ResponseEntity<CashCard> getCashCardById(@PathVariable long cashCardId, Principal principal) {
-        Optional<CashCard> cashCardOptional = Optional.ofNullable(_cashCardRepository.findByIdAndOwner(cashCardId, principal.getName()));
+        var cashCard = findCashCard(cashCardId, principal);
+        if (cashCard == null) {
+            return ResponseEntity.notFound().build();
+        }
 
-        return cashCardOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(cashCard);
     }
 
     @GetMapping
@@ -55,7 +58,7 @@ public class CashCardController {
      * Thanks, Spring Web!
      **/
     @PostMapping
-    private ResponseEntity<?> createCashCard(@RequestBody CashCardCreateRequestDto createRequestDto, UriComponentsBuilder ucb, Principal principal) {
+    private ResponseEntity<?> createCashCard(@RequestBody CashCardModifyRequestDto createRequestDto, UriComponentsBuilder ucb, Principal principal) {
         var newCashCard = _cashCardRepository.save(new CashCard(null, createRequestDto.amount(), principal.getName()));
 
 //        return ResponseEntity.created(URI.create("/cashcards/" + newCashCard.id())).build();
@@ -65,5 +68,23 @@ public class CashCardController {
                 .toUri();
 
         return ResponseEntity.created(locationOfNewCard).build();
+    }
+
+    @PutMapping("/{cashCardId}")
+    private ResponseEntity<Void> updateCashCard(@PathVariable long cashCardId, @RequestBody CashCardModifyRequestDto cashCardModifyRequestDto, Principal principal) {
+        var existingCashCard = findCashCard(cashCardId, principal);
+
+        if (existingCashCard == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var updatedCashCard = new CashCard(existingCashCard.id(), cashCardModifyRequestDto.amount(), principal.getName());
+        _cashCardRepository.save(updatedCashCard);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    private CashCard findCashCard(long cashCardId, Principal principal) {
+        return _cashCardRepository.findByIdAndOwner(cashCardId, principal.getName());
     }
 }
