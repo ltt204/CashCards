@@ -1,9 +1,9 @@
-package org.ltt204.cashcards.models;
+package org.ltt204.cashcards.model;
 
 
 import org.springframework.data.annotation.Id;
 
 public record CashCard(
-        @Id long id,
+        @Id Long id,
         double amount
 ) {}
