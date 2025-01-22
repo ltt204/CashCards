@@ -166,9 +166,43 @@ class CashCardsApplicationTests {
     }
 
     @Test
-    void shouldUpdateExistingCashCard() {
-        HttpEntity<CashCardModifyRequestDto> request = new HttpEntity<>(new CashCardModifyRequestDto(54.312));
-        ResponseEntity<Void> response = restTemplate.exchange("cashcards/99", HttpMethod.PUT, request, Void.class);
+    @DirtiesContext
+    void shouldUpdaclteExistingCashCard() {
+        HttpEntity<CashCardModifyRequestDto> request = new HttpEntity<>(new CashCardModifyRequestDto(54.321));
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("sarah1", "sarah123")
+                .exchange("/cashcards/99", HttpMethod.PUT, request, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("sarah1", "sarah123")
+                .getForEntity("/cashcards/99", String.class);
+
+        DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+        Number id = documentContext.read("$.id");
+        double amount = documentContext.read("$.amount");
+
+        assertThat(id).isEqualTo(99);
+        assertThat(amount).isEqualTo(54.321);
+    }
+
+    @Test
+    void shouldNotUpdateACashCardThatDoesNotExist() {
+        HttpEntity<CashCardModifyRequestDto> request = new HttpEntity<>(new CashCardModifyRequestDto(54.321));
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("sarah1", "sarah123")
+                .exchange("/cashcards/999", HttpMethod.PUT, request, Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldNotAllowToUpdateCashCardThatIsOwnedBySomeoneElse() {
+        HttpEntity<CashCardModifyRequestDto> request = new HttpEntity<>(new CashCardModifyRequestDto(54.321));
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("sarah1", "sarah123")
+                .exchange("/cashcards/102", HttpMethod.PUT, request, Void.class); // This from Kumar1
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }
