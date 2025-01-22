@@ -1,6 +1,6 @@
 package org.ltt204.cashcards.controller;
 
-import org.ltt204.cashcards.dto.CashCardCreateRequestDto;
+import org.ltt204.cashcards.dto.CashCardModifyRequestDto;
 import org.ltt204.cashcards.model.CashCard;
 import org.ltt204.cashcards.repository.CashCardRepository;
 import org.springframework.data.domain.Page;
@@ -55,7 +55,7 @@ public class CashCardController {
      * Thanks, Spring Web!
      **/
     @PostMapping
-    private ResponseEntity<?> createCashCard(@RequestBody CashCardCreateRequestDto createRequestDto, UriComponentsBuilder ucb, Principal principal) {
+    private ResponseEntity<?> createCashCard(@RequestBody CashCardModifyRequestDto createRequestDto, UriComponentsBuilder ucb, Principal principal) {
         var newCashCard = _cashCardRepository.save(new CashCard(null, createRequestDto.amount(), principal.getName()));
 
 //        return ResponseEntity.created(URI.create("/cashcards/" + newCashCard.id())).build();

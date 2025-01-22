@@ -3,16 +3,14 @@ package org.ltt204.cashcards;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
-import org.ltt204.cashcards.dto.CashCardCreateRequestDto;
+import org.ltt204.cashcards.dto.CashCardModifyRequestDto;
 import org.ltt204.cashcards.model.CashCard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
@@ -69,7 +67,7 @@ class CashCardsApplicationTests {
                 .withBasicAuth("sarah1", "sarah123")
                 .postForEntity(
                         "/cashcards",
-                        new CashCardCreateRequestDto(amountForCreateCashCard),
+                        new CashCardModifyRequestDto(amountForCreateCashCard),
                         Void.class
                 );
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -165,5 +163,12 @@ class CashCardsApplicationTests {
                 .getForEntity("/cashcards/102", String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldUpdateExistingCashCard() {
+        HttpEntity<CashCardModifyRequestDto> request = new HttpEntity<>(new CashCardModifyRequestDto(54.312));
+        ResponseEntity<Void> response = restTemplate.exchange("cashcards/99", HttpMethod.PUT, request, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 }
